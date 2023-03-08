@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>Chat App</h1>
+    </header>
+    <main>
+        <section id="messages">
+            <ul id="message-list"></ul>
+        </section>
+        <section id="input">
+            <form id="message-form">
+                <label for="sender">Text:</label>
+                <input type="text" id="text" name="text"><br>
+                <label for="sender">Sender:</label>
+                <input type="text" id="sender" name="sender"><br>
+                <input type="submit" value="Send">
+            </form>
+        </section>
+    </main>
+    <script>
+        // Connect to the server using Socket.io
+        const socket = io.connect();
+
+        // Send a message to the server
+        $('#message-form').submit(function (e) {
+            e.preventDefault();
+            const sender = $('#sender').val();
+            const text = $('#text').val();
+
+            // fetch the data from the form and send it to the server
+            fetch('/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ sender: sender, text: text })
+            });
+
+            socket.emit('message', { sender: sender, text: text });
+            $('#sender').val('');
+            $('#text').val('').focus();
+        });
+
+        // Display incoming messages from the server
+        socket.on('message', function (data) {
+            $('#message-list').append('<li><strong>' + data.sender + ':</strong> ' + data.text + '</li>');
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        // Load previous messages from the server upon connection
+        socket.on('messages', function (messages) {
+            messages.forEach(function (message) {
+                $('#message-list').append('<li><strong>' + message.sender + ':</strong> ' + message.text + '</li>');
+            });
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+    </script>
+</body>
+
+</html>
